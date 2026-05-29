@@ -1,0 +1,6 @@
+@PremixOrder_HostAddress = http://localhost:5195
+
+GET {{PremixOrder_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

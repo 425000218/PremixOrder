@@ -1,0 +1,387 @@
+-- ============================================
+-- CSDL_PremixOrderDB.sql.example
+-- Sanitized reference script for PremixOrderDB
+-- Contains schema and procedure shapes only.
+-- No sample secrets, keys, or production data.
+-- ============================================
+
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'PremixOrderDB')
+BEGIN
+    CREATE DATABASE PremixOrderDB;
+END;
+GO
+
+USE PremixOrderDB;
+GO
+
+DROP VIEW IF EXISTS dbo.vw_CurrentInventory;
+DROP VIEW IF EXISTS dbo.vw_OrderDetails;
+GO
+
+DROP PROCEDURE IF EXISTS dbo.sp_GetSuppliers;
+DROP PROCEDURE IF EXISTS dbo.sp_GetProducts;
+DROP PROCEDURE IF EXISTS dbo.sp_GetFactories;
+DROP PROCEDURE IF EXISTS dbo.sp_GetAllPurchaseOrders;
+DROP PROCEDURE IF EXISTS dbo.sp_GetPurchaseOrdersByCreatedDate;
+DROP PROCEDURE IF EXISTS dbo.sp_GetDatabaseInfo;
+GO
+
+DROP TABLE IF EXISTS dbo.Coverage;
+DROP TABLE IF EXISTS dbo.Inventory;
+DROP TABLE IF EXISTS dbo.PurchaseOrderDetail;
+DROP TABLE IF EXISTS dbo.PurchaseOrder;
+DROP TABLE IF EXISTS dbo.[User];
+DROP TABLE IF EXISTS dbo.Factory;
+DROP TABLE IF EXISTS dbo.Product;
+DROP TABLE IF EXISTS dbo.Supplier;
+DROP TABLE IF EXISTS dbo.Division;
+DROP TABLE IF EXISTS dbo.Region;
+GO
+
+CREATE TABLE dbo.Region (
+    RegionID INT IDENTITY(1,1) PRIMARY KEY,
+    RegionName NVARCHAR(50) NOT NULL UNIQUE
+);
+GO
+
+CREATE TABLE dbo.Division (
+    DivisionID INT IDENTITY(1,1) PRIMARY KEY,
+    DivisionName NVARCHAR(50) NOT NULL UNIQUE
+);
+GO
+
+CREATE TABLE dbo.Supplier (
+    SupplierID INT IDENTITY(1,1) PRIMARY KEY,
+    SupplierShortName NVARCHAR(50) NOT NULL UNIQUE,
+    SupplierFullName NVARCHAR(200) NOT NULL,
+    ContractNo NVARCHAR(100) NULL,
+    Incoterm NVARCHAR(50) NULL,
+    PaymentTerms NVARCHAR(20) NULL,
+    Email NVARCHAR(100) NULL,
+    IsDeleted BIT NOT NULL DEFAULT 0
+);
+GO
+
+CREATE TABLE dbo.Product (
+    ProductCode NVARCHAR(20) PRIMARY KEY,
+    ProductName NVARCHAR(200) NOT NULL,
+    PIC NVARCHAR(50) NULL,
+    TaxType NVARCHAR(20) NULL,
+    PackingType NVARCHAR(50) NULL,
+    CountryOfOrigin NVARCHAR(100) NULL
+);
+GO
+
+CREATE TABLE dbo.Factory (
+    FactoryCode NVARCHAR(10) PRIMARY KEY,
+    FactoryName NVARCHAR(100) NULL,
+    RegionID INT NOT NULL,
+    DivisionID INT NOT NULL,
+    CONSTRAINT FK_Factory_Region FOREIGN KEY (RegionID) REFERENCES dbo.Region(RegionID),
+    CONSTRAINT FK_Factory_Division FOREIGN KEY (DivisionID) REFERENCES dbo.Division(DivisionID)
+);
+GO
+
+CREATE TABLE dbo.[User] (
+    UserID INT IDENTITY(1,1) PRIMARY KEY,
+    Username NVARCHAR(50) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(200) NOT NULL,
+    FullName NVARCHAR(100) NOT NULL,
+    [Role] NVARCHAR(20) NOT NULL DEFAULT 'User',
+    IsActive BIT NOT NULL DEFAULT 1
+);
+GO
+
+CREATE TABLE dbo.PurchaseOrder (
+    PONumber NVARCHAR(50) PRIMARY KEY,
+    OrderDate DATE NOT NULL,
+    SupplierID INT NOT NULL,
+    RegionID INT NOT NULL,
+    DivisionID INT NOT NULL,
+    Incoterm NVARCHAR(20) NULL,
+    PaymentTerms NVARCHAR(20) NULL,
+    PIC NVARCHAR(50) NULL,
+    [Status] NVARCHAR(20) NOT NULL DEFAULT 'Pending',
+    CreatedDate DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_PO_Supplier FOREIGN KEY (SupplierID) REFERENCES dbo.Supplier(SupplierID),
+    CONSTRAINT FK_PO_Region FOREIGN KEY (RegionID) REFERENCES dbo.Region(RegionID),
+    CONSTRAINT FK_PO_Division FOREIGN KEY (DivisionID) REFERENCES dbo.Division(DivisionID),
+    CONSTRAINT CK_PO_Status CHECK ([Status] IN ('Pending', 'Confirmed', 'Delivered', 'Cancelled'))
+);
+GO
+
+CREATE TABLE dbo.PurchaseOrderDetail (
+    PODetailID INT IDENTITY(1,1) PRIMARY KEY,
+    PONumber NVARCHAR(50) NOT NULL,
+    ProductCode NVARCHAR(20) NOT NULL,
+    FactoryCode NVARCHAR(10) NOT NULL,
+    Quantity DECIMAL(18,2) NOT NULL CHECK (Quantity > 0),
+    UnitPrice DECIMAL(18,2) NOT NULL CHECK (UnitPrice >= 0),
+    VATRate NVARCHAR(10) NULL,
+    Amount DECIMAL(18,2) NOT NULL,
+    DeliveryMonth NVARCHAR(10) NULL,
+    ExpectedDeliveryDate DATE NULL,
+    [Note] NVARCHAR(500) NULL,
+    CONSTRAINT FK_POD_PO FOREIGN KEY (PONumber) REFERENCES dbo.PurchaseOrder(PONumber) ON DELETE CASCADE,
+    CONSTRAINT FK_POD_Product FOREIGN KEY (ProductCode) REFERENCES dbo.Product(ProductCode),
+    CONSTRAINT FK_POD_Factory FOREIGN KEY (FactoryCode) REFERENCES dbo.Factory(FactoryCode)
+);
+GO
+
+CREATE TABLE dbo.Inventory (
+    InventoryID INT IDENTITY(1,1) PRIMARY KEY,
+    FactoryCode NVARCHAR(10) NOT NULL,
+    ProductCode NVARCHAR(20) NOT NULL,
+    SOH DECIMAL(18,2) NOT NULL DEFAULT 0,
+    UsageMonth DECIMAL(18,2) NULL,
+    LastUpdated DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_Inventory_Factory FOREIGN KEY (FactoryCode) REFERENCES dbo.Factory(FactoryCode),
+    CONSTRAINT FK_Inventory_Product FOREIGN KEY (ProductCode) REFERENCES dbo.Product(ProductCode),
+    CONSTRAINT UQ_Inventory_Factory_Product UNIQUE (FactoryCode, ProductCode)
+);
+GO
+
+CREATE TABLE dbo.Coverage (
+    CoverageID INT IDENTITY(1,1) PRIMARY KEY,
+    FactoryCode NVARCHAR(10) NOT NULL,
+    ProductCode NVARCHAR(20) NOT NULL,
+    UsagePerDay DECIMAL(18,2) NULL,
+    CoveredDays INT NULL,
+    CoverageTill DATE NULL,
+    PO_Pending DECIMAL(18,2) NULL,
+    ArrangeMore DECIMAL(18,2) NULL,
+    CONSTRAINT FK_Coverage_Factory FOREIGN KEY (FactoryCode) REFERENCES dbo.Factory(FactoryCode),
+    CONSTRAINT FK_Coverage_Product FOREIGN KEY (ProductCode) REFERENCES dbo.Product(ProductCode),
+    CONSTRAINT UQ_Coverage_Factory_Product UNIQUE (FactoryCode, ProductCode)
+);
+GO
+
+CREATE TYPE dbo.PurchaseOrderRowType AS TABLE (
+    PONumber NVARCHAR(50) NOT NULL,
+    OrderDate DATE NOT NULL,
+    SupplierShortName NVARCHAR(50) NOT NULL,
+    RegionName NVARCHAR(50) NOT NULL,
+    DivisionName NVARCHAR(50) NOT NULL,
+    ProductCode NVARCHAR(20) NOT NULL,
+    FactoryCode NVARCHAR(10) NOT NULL,
+    Quantity DECIMAL(18,2) NOT NULL,
+    UnitPrice DECIMAL(18,2) NOT NULL,
+    VATRate NVARCHAR(10) NULL,
+    DeliveryMonth NVARCHAR(10) NULL,
+    ExpectedDeliveryDate DATE NULL,
+    Note NVARCHAR(500) NULL
+);
+GO
+
+CREATE INDEX IX_PurchaseOrder_OrderDate ON dbo.PurchaseOrder(OrderDate);
+CREATE INDEX IX_PurchaseOrder_SupplierID ON dbo.PurchaseOrder(SupplierID);
+CREATE INDEX IX_PurchaseOrderDetail_PONumber ON dbo.PurchaseOrderDetail(PONumber);
+CREATE INDEX IX_PurchaseOrderDetail_ProductCode ON dbo.PurchaseOrderDetail(ProductCode);
+CREATE INDEX IX_PurchaseOrderDetail_FactoryCode ON dbo.PurchaseOrderDetail(FactoryCode);
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GetDatabaseInfo
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT DB_NAME() AS databaseName, @@SERVERNAME AS serverName;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GetAllPurchaseOrders
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        po.PONumber,
+        po.OrderDate,
+        po.CreatedDate,
+        s.SupplierShortName,
+        r.RegionName,
+        d.DivisionName,
+        pod.PODetailID,
+        pod.ProductCode,
+        p.ProductName,
+        pod.FactoryCode,
+        f.FactoryName,
+        pod.Quantity,
+        pod.UnitPrice,
+        pod.VATRate,
+        pod.DeliveryMonth,
+        pod.Note
+    FROM dbo.PurchaseOrder po
+    JOIN dbo.Supplier s ON po.SupplierID = s.SupplierID
+    JOIN dbo.Region r ON po.RegionID = r.RegionID
+    JOIN dbo.Division d ON po.DivisionID = d.DivisionID
+    JOIN dbo.PurchaseOrderDetail pod ON po.PONumber = pod.PONumber
+    LEFT JOIN dbo.Product p ON pod.ProductCode = p.ProductCode
+    LEFT JOIN dbo.Factory f ON pod.FactoryCode = f.FactoryCode
+    ORDER BY po.OrderDate DESC, po.PONumber DESC, pod.PODetailID ASC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_SavePurchaseOrderDetail
+    @PODetailID INT = NULL,
+    @PONumber NVARCHAR(50),
+    @OrderDate DATE,
+    @SupplierShortName NVARCHAR(50),
+    @RegionName NVARCHAR(50),
+    @DivisionName NVARCHAR(50),
+    @ProductCode NVARCHAR(20),
+    @FactoryCode NVARCHAR(10),
+    @Quantity DECIMAL(18,2),
+    @UnitPrice DECIMAL(18,2),
+    @VATRate NVARCHAR(10) = NULL,
+    @DeliveryMonth NVARCHAR(10) = NULL,
+    @ExpectedDeliveryDate DATE = NULL,
+    @Note NVARCHAR(500) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @SupplierID INT, @RegionID INT, @DivisionID INT;
+    SELECT @SupplierID = SupplierID FROM dbo.Supplier WHERE SupplierShortName = @SupplierShortName AND IsDeleted = 0;
+    IF @SupplierID IS NULL THROW 50001, 'Supplier (NCC) does not exist in master table.', 1;
+    SELECT @RegionID = RegionID FROM dbo.Region WHERE RegionName = @RegionName;
+    IF @RegionID IS NULL THROW 50002, 'Region does not exist in master table.', 1;
+    SELECT @DivisionID = DivisionID FROM dbo.Division WHERE DivisionName = @DivisionName;
+    IF @DivisionID IS NULL THROW 50003, 'Division does not exist in master table.', 1;
+    IF NOT EXISTS (SELECT 1 FROM dbo.Product WHERE ProductCode = @ProductCode)
+        THROW 50004, 'ITEM does not exist in master table.', 1;
+    IF NOT EXISTS (SELECT 1 FROM dbo.Factory WHERE FactoryCode = @FactoryCode)
+        THROW 50005, 'FACT does not exist in master table.', 1;
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.PurchaseOrder WHERE PONumber = @PONumber)
+    BEGIN
+        INSERT INTO dbo.PurchaseOrder (PONumber, OrderDate, SupplierID, RegionID, DivisionID, [Status])
+        VALUES (@PONumber, @OrderDate, @SupplierID, @RegionID, @DivisionID, 'Pending');
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.PurchaseOrder
+        SET OrderDate = @OrderDate,
+            SupplierID = @SupplierID,
+            RegionID = @RegionID,
+            DivisionID = @DivisionID
+        WHERE PONumber = @PONumber;
+    END
+
+    IF @PODetailID IS NULL
+    BEGIN
+        INSERT INTO dbo.PurchaseOrderDetail
+        (PONumber, ProductCode, FactoryCode, Quantity, UnitPrice, VATRate, Amount, DeliveryMonth, ExpectedDeliveryDate, [Note])
+        VALUES
+        (@PONumber, @ProductCode, @FactoryCode, @Quantity, @UnitPrice, @VATRate, @Quantity * @UnitPrice, @DeliveryMonth, @ExpectedDeliveryDate, @Note);
+        SELECT CAST(SCOPE_IDENTITY() AS INT) AS PODetailID;
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.PurchaseOrderDetail WHERE PODetailID = @PODetailID)
+        THROW 50006, 'Detail row does not exist.', 1;
+
+    UPDATE dbo.PurchaseOrderDetail
+    SET PONumber = @PONumber,
+        ProductCode = @ProductCode,
+        FactoryCode = @FactoryCode,
+        Quantity = @Quantity,
+        UnitPrice = @UnitPrice,
+        VATRate = @VATRate,
+        Amount = @Quantity * @UnitPrice,
+        DeliveryMonth = @DeliveryMonth,
+        ExpectedDeliveryDate = @ExpectedDeliveryDate,
+        [Note] = @Note
+    WHERE PODetailID = @PODetailID;
+
+    SELECT @PODetailID AS PODetailID;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_DeletePurchaseOrderDetail
+    @PODetailID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @PONumber NVARCHAR(50);
+    SELECT @PONumber = PONumber FROM dbo.PurchaseOrderDetail WHERE PODetailID = @PODetailID;
+    IF @PONumber IS NULL THROW 50007, 'Detail row does not exist.', 1;
+
+    DELETE FROM dbo.PurchaseOrderDetail WHERE PODetailID = @PODetailID;
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.PurchaseOrderDetail WHERE PONumber = @PONumber)
+    BEGIN
+        DELETE FROM dbo.PurchaseOrder WHERE PONumber = @PONumber;
+    END
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GetPurchaseOrdersByCreatedDate
+    @FromDate DATE,
+    @ToDate DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        po.PONumber,
+        po.OrderDate,
+        po.CreatedDate,
+        s.SupplierShortName,
+        r.RegionName,
+        d.DivisionName,
+        pod.ProductCode,
+        p.ProductName,
+        pod.FactoryCode,
+        f.FactoryName,
+        pod.Quantity,
+        pod.UnitPrice,
+        pod.VATRate,
+        pod.DeliveryMonth,
+        pod.Note
+    FROM dbo.PurchaseOrder po
+    JOIN dbo.Supplier s ON po.SupplierID = s.SupplierID
+    JOIN dbo.Region r ON po.RegionID = r.RegionID
+    JOIN dbo.Division d ON po.DivisionID = d.DivisionID
+    JOIN dbo.PurchaseOrderDetail pod ON po.PONumber = pod.PONumber
+    LEFT JOIN dbo.Product p ON pod.ProductCode = p.ProductCode
+    LEFT JOIN dbo.Factory f ON pod.FactoryCode = f.FactoryCode
+    WHERE CONVERT(date, po.CreatedDate) BETWEEN @FromDate AND @ToDate
+    ORDER BY po.CreatedDate DESC, po.OrderDate DESC, po.PONumber DESC, pod.PODetailID ASC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GetFactories
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT f.FactoryCode, f.FactoryName, r.RegionName, d.DivisionName
+    FROM dbo.Factory f
+    JOIN dbo.Region r ON f.RegionID = r.RegionID
+    JOIN dbo.Division d ON f.DivisionID = d.DivisionID
+    ORDER BY f.FactoryCode;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GetProducts
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT ProductCode, ProductName, PIC, TaxType, CountryOfOrigin
+    FROM dbo.Product
+    ORDER BY ProductCode;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GetSuppliers
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT SupplierShortName, SupplierFullName, ContractNo, Incoterm, PaymentTerms
+    FROM dbo.Supplier
+    WHERE IsDeleted = 0
+    ORDER BY SupplierShortName;
+END;
+GO
+
+-- No seed data in the example file.

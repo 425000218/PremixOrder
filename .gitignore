@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+*.secret.json
+*.local.json
+secrets.json
+Properties/launchSettings.local.json
+*.sql
+!*.sql.example

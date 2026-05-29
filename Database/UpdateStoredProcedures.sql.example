@@ -1,0 +1,114 @@
+-- ============================================
+-- UpdateStoredProcedures.sql.example
+-- Sanitized proc-only reference for PremixOrderDB
+-- No sample data or secrets.
+-- ============================================
+
+USE PremixOrderDB;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GetDatabaseInfo
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT DB_NAME() AS databaseName, @@SERVERNAME AS serverName;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GetAllPurchaseOrders
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT
+        po.PONumber,
+        po.OrderDate,
+        po.CreatedDate,
+        s.SupplierShortName,
+        r.RegionName,
+        d.DivisionName,
+        pod.ProductCode,
+        p.ProductName,
+        pod.FactoryCode,
+        f.FactoryName,
+        pod.Quantity,
+        pod.UnitPrice,
+        pod.VATRate,
+        pod.DeliveryMonth,
+        pod.Note
+    FROM dbo.PurchaseOrder po
+    JOIN dbo.Supplier s ON po.SupplierID = s.SupplierID
+    JOIN dbo.Region r ON po.RegionID = r.RegionID
+    JOIN dbo.Division d ON po.DivisionID = d.DivisionID
+    JOIN dbo.PurchaseOrderDetail pod ON po.PONumber = pod.PONumber
+    LEFT JOIN dbo.Product p ON pod.ProductCode = p.ProductCode
+    LEFT JOIN dbo.Factory f ON pod.FactoryCode = f.FactoryCode
+    ORDER BY po.OrderDate DESC, po.PONumber DESC, pod.PODetailID ASC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GetPurchaseOrdersByCreatedDate
+    @FromDate DATE,
+    @ToDate DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT
+        po.PONumber,
+        po.OrderDate,
+        po.CreatedDate,
+        s.SupplierShortName,
+        r.RegionName,
+        d.DivisionName,
+        pod.ProductCode,
+        p.ProductName,
+        pod.FactoryCode,
+        f.FactoryName,
+        pod.Quantity,
+        pod.UnitPrice,
+        pod.VATRate,
+        pod.DeliveryMonth,
+        pod.Note
+    FROM dbo.PurchaseOrder po
+    JOIN dbo.Supplier s ON po.SupplierID = s.SupplierID
+    JOIN dbo.Region r ON po.RegionID = r.RegionID
+    JOIN dbo.Division d ON po.DivisionID = d.DivisionID
+    JOIN dbo.PurchaseOrderDetail pod ON po.PONumber = pod.PONumber
+    LEFT JOIN dbo.Product p ON pod.ProductCode = p.ProductCode
+    LEFT JOIN dbo.Factory f ON pod.FactoryCode = f.FactoryCode
+    WHERE CONVERT(date, po.CreatedDate) BETWEEN @FromDate AND @ToDate
+    ORDER BY po.CreatedDate DESC, po.OrderDate DESC, po.PONumber DESC, pod.PODetailID ASC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GetFactories
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT f.FactoryCode, f.FactoryName, r.RegionName, d.DivisionName
+    FROM dbo.Factory f
+    JOIN dbo.Region r ON f.RegionID = r.RegionID
+    JOIN dbo.Division d ON f.DivisionID = d.DivisionID
+    ORDER BY f.FactoryCode;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GetProducts
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT ProductCode, ProductName, PIC, TaxType, CountryOfOrigin
+    FROM dbo.Product
+    ORDER BY ProductCode;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GetSuppliers
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT SupplierShortName, SupplierFullName, ContractNo, Incoterm, PaymentTerms
+    FROM dbo.Supplier
+    WHERE IsDeleted = 0
+    ORDER BY SupplierShortName;
+END;
+GO
