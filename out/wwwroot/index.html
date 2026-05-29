@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Premix Order Workbook</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #eef3f8;
+            --panel: rgba(255, 255, 255, 0.86);
+            --panel-border: rgba(33, 59, 96, 0.12);
+            --sheet-blue: #2f68b4;
+            --sheet-blue-dark: #1f4f8d;
+            --sheet-gold: #f5d66c;
+            --sheet-green: #b8e4be;
+            --sheet-cyan: #bfe8f1;
+            --sheet-rose: #f7c2c6;
+            --ink: #172033;
+            --muted: #667085;
+            --grid: #d7e1ec;
+            --row-alt: #f7fbff;
+            --highlight: #fff5b5;
+        }
+
+        html, body {
+            min-height: 100%;
+            background:
+                radial-gradient(circle at top left, rgba(47, 104, 180, 0.18), transparent 30%),
+                radial-gradient(circle at 90% 10%, rgba(39, 174, 96, 0.14), transparent 24%),
+                linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+            color: var(--ink);
+        }
+
+        body {
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .app-shell {
+            max-width: 1700px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, rgba(20, 54, 94, 0.95), rgba(49, 110, 188, 0.92));
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 20px 60px rgba(14, 38, 71, 0.14);
+        }
+
+        .hero .badge {
+            background: rgba(255, 255, 255, 0.16) !important;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .glass-panel {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 18px 48px rgba(23, 32, 51, 0.08);
+        }
+
+        .toolbar {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            border: 1px solid rgba(32, 64, 109, 0.1);
+        }
+
+        .metric {
+            border: 1px solid rgba(32, 64, 109, 0.1);
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            box-shadow: 0 10px 24px rgba(28, 45, 69, 0.06);
+        }
+
+        .metric .value {
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+        }
+
+        .metric .label {
+            color: var(--muted);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .sheet-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+        }
+
+        .sheet-tab {
+            border: 1px solid rgba(32, 64, 109, 0.16);
+            background: linear-gradient(180deg, #fff 0%, #eef5ff 100%);
+            color: var(--ink);
+            border-radius: 999px;
+            padding: .55rem .95rem;
+            font-weight: 700;
+            font-size: .9rem;
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+
+        .sheet-tab:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(30, 50, 80, 0.08);
+        }
+
+        .sheet-tab.active {
+            background: linear-gradient(180deg, var(--sheet-blue) 0%, var(--sheet-blue-dark) 100%);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .search-box .form-control,
+        .search-box .form-select {
+            border-color: rgba(32, 64, 109, 0.18);
+            box-shadow: none;
+        }
+
+        .search-box .form-control:focus,
+        .search-box .form-select:focus {
+            border-color: rgba(47, 104, 180, 0.55);
+            box-shadow: 0 0 0 .25rem rgba(47, 104, 180, 0.12);
+        }
+
+        .sheet-wrap {
+            overflow: auto;
+            border: 1px solid rgba(32, 64, 109, 0.12);
+            background: white;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+            max-height: 74vh;
+        }
+
+        .sheet-table {
+            width: 100%;
+            min-width: 1400px;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: .86rem;
+        }
+
+        .sheet-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            background: linear-gradient(180deg, #4c7dc0 0%, #2f68b4 100%);
+            color: #fff;
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: .6rem .55rem;
+            vertical-align: middle;
+        }
+
+        .sheet-table tbody td {
+            border: 1px solid var(--grid);
+            padding: .45rem .5rem;
+            vertical-align: top;
+            background: white;
+            word-break: break-word;
+        }
+
+        .sheet-table tbody tr:nth-child(even) td {
+            background: var(--row-alt);
+        }
+
+        .sheet-table tbody tr:hover td {
+            background: #eef6ff;
+        }
+
+        .cell-muted {
+            color: var(--muted);
+            font-size: .78rem;
+        }
+
+        .po-group {
+            background: linear-gradient(180deg, #fffde8 0%, #fff6af 100%);
+        }
+
+        .po-group td {
+            border-top: 1px solid #e7cf55 !important;
+            border-bottom: 1px solid #e7cf55 !important;
+        }
+
+        .sticky-index {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            background: inherit;
+            box-shadow: 2px 0 0 rgba(32, 64, 109, 0.06);
+            width: 52px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .sticky-po {
+            position: sticky;
+            left: 52px;
+            z-index: 2;
+            background: inherit;
+            min-width: 180px;
+        }
+
+        .sticky-item {
+            position: sticky;
+            left: 232px;
+            z-index: 2;
+            background: inherit;
+            min-width: 100px;
+        }
+
+        .status-dot {
+            width: .55rem;
+            height: .55rem;
+            border-radius: 999px;
+            display: inline-block;
+            margin-right: .35rem;
+        }
+
+        .dot-ok { background: #2ecc71; }
+        .dot-warn { background: #f1c40f; }
+        .dot-danger { background: #e74c3c; }
+
+        .section-title {
+            font-size: .82rem;
+            font-weight: 800;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .mini-grid {
+            display: grid;
+            gap: .75rem;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .ref-table {
+            font-size: .82rem;
+        }
+
+        .ref-table thead th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(180deg, #dcecff 0%, #c6dbf5 100%);
+            color: #1d3557;
+            font-size: .72rem;
+            text-transform: uppercase;
+        }
+
+        .ref-table td, .ref-table th {
+            padding: .38rem .45rem;
+            border: 1px solid var(--grid);
+        }
+
+        .ref-scroll {
+            max-height: 280px;
+            overflow: auto;
+            background: #fff;
+            border: 1px solid rgba(32, 64, 109, 0.12);
+        }
+
+        .loading-mask {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,.68);
+            backdrop-filter: blur(2px);
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+
+        .grid-host {
+            position: relative;
+        }
+
+        .badge-soft {
+            border: 1px solid rgba(32,64,109,.12);
+            background: #f6f9ff;
+            color: var(--ink);
+        }
+
+        .filter-builder {
+            border: 1px solid rgba(32, 64, 109, 0.12);
+            background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+        }
+
+        .filter-header {
+            cursor: pointer;
+        }
+
+        .filter-body.is-collapsed {
+            display: none;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1.25fr 0.8fr 1.7fr auto;
+            gap: .6rem;
+            align-items: center;
+        }
+
+        .filter-row .form-select,
+        .filter-row .form-control {
+            border-color: rgba(32, 64, 109, 0.18);
+            box-shadow: none;
+        }
+
+        .filter-row .btn {
+            white-space: nowrap;
+        }
+
+        .suggestion-list {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 4px);
+            z-index: 20;
+            display: none;
+            max-height: 220px;
+            overflow: auto;
+            background: #fff;
+            border: 1px solid rgba(32, 64, 109, 0.18);
+            border-radius: .5rem;
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
+        }
+
+        .suggestion-item {
+            padding: .45rem .6rem;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(32, 64, 109, 0.08);
+            font-size: .84rem;
+        }
+
+        .suggestion-item:hover {
+            background: #eef6ff;
+        }
+
+        .suggestion-item strong {
+            display: block;
+            font-size: .86rem;
+        }
+
+        .detail-panel-grid {
+            position: sticky;
+            top: 1rem;
+        }
+
+        @media (max-width: 1200px) {
+            .mini-grid { grid-template-columns: 1fr; }
+            .sheet-wrap { max-height: none; }
+            .filter-row { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            body { font-size: .92rem; }
+
+            .app-shell {
+                padding-left: .5rem;
+                padding-right: .5rem;
+            }
+
+            .hero {
+                padding: 1rem !important;
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .hero p {
+                font-size: .9rem;
+            }
+
+            .sheet-tab {
+                padding: .45rem .7rem;
+                font-size: .8rem;
+            }
+
+            .metric .value {
+                font-size: 1.15rem;
+            }
+
+            .filter-builder {
+                padding: .85rem !important;
+            }
+
+            .sheet-table {
+                min-width: 100%;
+                font-size: .72rem;
+            }
+
+            .sheet-table thead th,
+            .sheet-table tbody td {
+                padding: .32rem .28rem;
+            }
+
+            .sticky-index {
+                width: 38px;
+            }
+
+            .sticky-po {
+                left: 38px;
+                min-width: 118px;
+            }
+
+            .sticky-item {
+                left: 156px;
+                min-width: 84px;
+            }
+
+            .sheet-table thead th:nth-child(6),
+            .sheet-table tbody td:nth-child(6),
+            .sheet-table thead th:nth-child(7),
+            .sheet-table tbody td:nth-child(7),
+            .sheet-table thead th:nth-child(9),
+            .sheet-table tbody td:nth-child(9),
+            .sheet-table thead th:nth-child(10),
+            .sheet-table tbody td:nth-child(10),
+            .sheet-table thead th:nth-child(11),
+            .sheet-table tbody td:nth-child(11),
+            .sheet-table thead th:nth-child(13),
+            .sheet-table tbody td:nth-child(13),
+            .sheet-table thead th:nth-child(14),
+            .sheet-table tbody td:nth-child(14) {
+                display: none;
+            }
+
+            .detail-panel-grid .col-6,
+            .detail-panel-grid .col-12 {
+                width: 100%;
+            }
+
+            .detail-panel-grid {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-3 px-3 app-shell">
+        <div class="hero rounded-4 p-4 mb-3">
+            <div class="d-flex flex-column flex-xl-row gap-3 justify-content-between align-items-xl-end">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="badge rounded-pill">Live SQL</span>
+                        <span class="badge rounded-pill">Excel-style workbook</span>
+                        <span class="badge rounded-pill">Bootstrap 5</span>
+                    </div>
+                    <h1 class="display-6 fw-bold mb-2">Premix Order Workbook</h1>
+                    <p class="mb-0 text-white-50">UI dạng sheet giống Excel để xem PO, kiểm tra DB, và thao tác nhanh ngay trên web.</p>
+                </div>
+                <div class="text-xl-end">
+                    <div id="connectionState" class="fw-semibold mb-2"><span class="status-dot dot-warn"></span>Chưa kiểm tra kết nối</div>
+                    <div class="d-flex gap-2 flex-wrap justify-content-xl-end">
+                        <button id="btnPing" class="btn btn-light fw-semibold">Test DB</button>
+                        <button id="btnLoad" class="btn btn-warning fw-semibold">Load PO</button>
+                        <button id="btnClear" class="btn btn-outline-light fw-semibold">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-4 p-3 mb-3 toolbar">
+            <div class="row g-3 align-items-center">
+                <div class="col-12 col-xl-5">
+                    <div class="search-box input-group">
+                        <span class="input-group-text bg-white fw-semibold">Search</span>
+                        <input id="searchInput" type="text" class="form-control" placeholder="Quick contain: PO / item / supplier / note...">
+                        <select id="scopeSelect" class="form-select" style="max-width: 190px;">
+                            <option value="all">All fields</option>
+                            <option value="poNumber">PO number</option>
+                            <option value="item">Item</option>
+                            <option value="supplier">Supplier</option>
+                            <option value="note">Note</option>
+                        </select>
+                    </div>
+                    <div class="small text-secondary mt-2">Quick search is client-side; advanced filters load only rows within the selected created-date range.</div>
+                </div>
+                <div class="col-12 col-xl-7">
+                    <div class="sheet-tabs justify-content-xl-end">
+                        <button class="sheet-tab active" data-view="workbook">Workbook</button>
+                        <button class="sheet-tab" data-view="summary">Summary</button>
+                        <button class="sheet-tab" data-view="factory">tblFACTORY</button>
+                        <button class="sheet-tab" data-view="item">tblITEM</button>
+                        <button class="sheet-tab" data-view="ncc">tblNCC</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-4 p-3 mb-3 filter-builder">
+            <div class="d-flex justify-content-between align-items-center filter-header" id="advancedSearchToggle">
+                <div>
+                    <div class="section-title">Advanced search</div>
+                    <div class="fw-semibold">Bấm để ẩn/xổ xuống toàn bộ bộ lọc chi tiết</div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="advancedSearchButton">Hide</button>
+            </div>
+
+            <div id="advancedSearchBody" class="filter-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-xl-3">
+                    <label class="form-label fw-semibold mb-1">Created date from</label>
+                    <input id="fromCreatedDate" type="date" class="form-control">
+                </div>
+                <div class="col-12 col-xl-3">
+                    <label class="form-label fw-semibold mb-1">Created date to</label>
+                    <input id="toCreatedDate" type="date" class="form-control">
+                </div>
+                <div class="col-12 col-xl-6">
+                    <div class="d-flex flex-wrap gap-2 justify-content-xl-end">
+                        <button id="btnSearch" class="btn btn-primary fw-semibold">Search</button>
+                        <button id="btnResetSearch" class="btn btn-outline-primary fw-semibold">Reset range</button>
+                        <button id="btnAddCondition" class="btn btn-outline-secondary fw-semibold">Add condition</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                    <div>
+                        <div class="section-title">Advanced search</div>
+                        <div class="fw-semibold">2-n điều kiện, mỗi dòng là 1 điều kiện, combine bằng AND</div>
+                    </div>
+                    <div class="small text-secondary">Dùng contains để tìm chuỗi con, không cần nhập chính xác toàn bộ giá trị</div>
+                </div>
+                <div id="conditionList" class="d-grid gap-2"></div>
+            </div>
+            </div>
+        </div>
+
+        <div class="mini-grid mb-3">
+            <div class="metric rounded-4 p-3">
+                <div class="label">DB Status</div>
+                <div id="metricDb" class="value">-</div>
+                <div class="text-secondary small">Kết nối server local</div>
+            </div>
+            <div class="metric rounded-4 p-3">
+                <div class="label">Purchase Orders</div>
+                <div id="metricPo" class="value">0</div>
+                <div class="text-secondary small">Số PO nhóm theo số chứng từ</div>
+            </div>
+            <div class="metric rounded-4 p-3">
+                <div class="label">Lines Loaded</div>
+                <div id="metricLines" class="value">0</div>
+                <div class="text-secondary small">Số dòng chi tiết từ API</div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-12 col-xxl-9">
+                <div class="glass-panel rounded-4 p-3 grid-host">
+                    <div id="loadingMask" class="loading-mask rounded-4">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary mb-2" role="status"></div>
+                            <div class="fw-semibold">Đang tải dữ liệu...</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                        <div>
+                            <div class="section-title">Sheet</div>
+                            <div class="fw-bold fs-5">Purchase Order Detail Grid</div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge badge-soft rounded-pill">Sticky header</span>
+                            <span class="badge badge-soft rounded-pill">Row grouping</span>
+                            <span class="badge badge-soft rounded-pill">Excel-style cell borders</span>
+                        </div>
+                    </div>
+
+                    <div id="sheetWrap" class="sheet-wrap rounded-3">
+                        <table class="sheet-table" id="poTable">
+                            <colgroup>
+                                <col style="width: 52px;">
+                                <col style="width: 180px;">
+                                <col style="width: 100px;">
+                                <col style="width: 130px;">
+                                <col style="width: 92px;">
+                                <col style="width: 92px;">
+                                <col style="width: 88px;">
+                                <col style="width: 88px;">
+                                <col style="width: 82px;">
+                                <col style="width: 82px;">
+                                <col style="width: 90px;">
+                                <col style="width: 130px;">
+                                <col style="width: 130px;">
+                                <col style="width: 140px;">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th class="sticky-index">#</th>
+                                    <th class="sticky-po">PO number</th>
+                                    <th class="sticky-item">Item</th>
+                                    <th>Product</th>
+                                    <th>Factory</th>
+                                    <th>Region</th>
+                                    <th>Division</th>
+                                    <th>Qty</th>
+                                    <th>Unit price</th>
+                                    <th>VAT</th>
+                                    <th>Delivery month</th>
+                                    <th>Order date</th>
+                                    <th>Supplier</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody id="poBody">
+                                <tr>
+                                    <td colspan="14" class="text-center text-secondary py-5">Nhấn <strong>Load PO</strong> để hiển thị dữ liệu dạng sheet giống Excel.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xxl-3">
+                <div class="glass-panel rounded-4 p-3 mb-3">
+                    <div class="section-title mb-2">Sheet Navigator</div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary text-start" id="btnFactory">Open tblFACTORY preview</button>
+                        <button class="btn btn-outline-primary text-start" id="btnItem">Open tblITEM preview</button>
+                        <button class="btn btn-outline-primary text-start" id="btnNcc">Open tblNCC preview</button>
+                    </div>
+                    <div class="alert alert-info mt-3 mb-0 small">
+                        Ba khung preview bên dưới là mẫu giao diện sheet để bạn mở rộng thêm endpoint nếu muốn hiển thị danh mục như trong Excel.
+                    </div>
+                </div>
+
+                <div id="detailPanel" class="glass-panel rounded-4 p-3 detail-panel-grid">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <div>
+                            <div class="section-title mb-1">Editor</div>
+                            <div id="detailTitle" class="fw-bold fs-5 mb-1">Chưa có dòng nào</div>
+                            <div id="detailMeta" class="text-secondary small">Chọn một dòng trong bảng để xem chi tiết.</div>
+                        </div>
+                        <span id="editorModeBadge" class="badge rounded-pill text-bg-secondary">VIEW</span>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button class="btn btn-sm btn-outline-primary" id="btnNewRow">New</button>
+                        <button class="btn btn-sm btn-primary" id="btnSaveRow">Save</button>
+                        <button class="btn btn-sm btn-outline-danger" id="btnDeleteRow">Delete</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="btnCancelEdit">Cancel</button>
+                    </div>
+
+                    <input type="hidden" id="detailPODetailID" />
+
+                    <div class="small text-secondary mb-2" id="editorMessage">Chọn một dòng rồi bấm Save để cập nhật, hoặc New để thêm mới.</div>
+
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label mb-1 fw-semibold">PO Number</label>
+                            <input id="detailPONumber" class="form-control form-control-sm" type="text" placeholder="PO-0001">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label mb-1 fw-semibold">Order date</label>
+                            <input id="detailOrderDate" class="form-control form-control-sm" type="date">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label mb-1 fw-semibold">Created date</label>
+                            <input id="detailCreatedDate" class="form-control form-control-sm" type="text" readonly>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label mb-1 fw-semibold">NCC</label>
+                            <div class="position-relative">
+                                <input id="detailSupplierShortName" class="form-control form-control-sm" type="text" placeholder="Type to search supplier..." autocomplete="off">
+                                <div id="supplierSuggestions" class="suggestion-list"></div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label mb-1 fw-semibold">Region</label>
+                            <select id="detailRegionName" class="form-select form-select-sm"></select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label mb-1 fw-semibold">Division</label>
+                            <select id="detailDivisionName" class="form-select form-select-sm"></select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label mb-1 fw-semibold">ITEM</label>
+                            <div class="position-relative">
+                                <input id="detailProductCode" class="form-control form-control-sm" type="text" placeholder="Type to search item code/name..." autocomplete="off">
+                                <div id="productSuggestions" class="suggestion-list"></div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label mb-1 fw-semibold">FACT</label>
+                            <div class="position-relative">
+                                <input id="detailFactoryCode" class="form-control form-control-sm" type="text" placeholder="Type to search factory code/name..." autocomplete="off">
+                                <div id="factorySuggestions" class="suggestion-list"></div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label mb-1 fw-semibold">Quantity</label>
+                            <input id="detailQuantity" class="form-control form-control-sm" type="number" min="0" step="0.01">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label mb-1 fw-semibold">Unit price</label>
+                            <input id="detailUnitPrice" class="form-control form-control-sm" type="number" min="0" step="0.01">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label mb-1 fw-semibold">VAT</label>
+                            <input id="detailVATRate" class="form-control form-control-sm" type="text" placeholder="NonVAT">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label mb-1 fw-semibold">Delivery month</label>
+                            <input id="detailDeliveryMonth" class="form-control form-control-sm" type="text" placeholder="05/2026">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label mb-1 fw-semibold">Expected delivery</label>
+                            <input id="detailExpectedDeliveryDate" class="form-control form-control-sm" type="date">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label mb-1 fw-semibold">Note</label>
+                            <textarea id="detailNote" class="form-control form-control-sm" rows="3" placeholder="Optional note"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+            <div class="col-12 col-xl-4">
+                <div class="glass-panel rounded-4 p-3">
+                    <div class="section-title mb-2">tblFACTORY preview</div>
+                    <div class="ref-scroll rounded-3">
+                        <table class="table table-sm mb-0 ref-table" id="factoryTable">
+                            <thead>
+                                <tr><th>FACT</th><th>DESC</th><th>REGI</th><th>Division</th><th>Site</th></tr>
+                            </thead>
+                            <tbody id="factoryBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-4">
+                <div class="glass-panel rounded-4 p-3">
+                    <div class="section-title mb-2">tblITEM preview</div>
+                    <div class="ref-scroll rounded-3">
+                        <table class="table table-sm mb-0 ref-table" id="itemTable">
+                            <thead>
+                                <tr><th>CODE</th><th>DESC</th><th>PIC</th><th>VAT</th><th>Country</th></tr>
+                            </thead>
+                            <tbody id="itemBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-4">
+                <div class="glass-panel rounded-4 p-3">
+                    <div class="section-title mb-2">tblNCC preview</div>
+                    <div class="ref-scroll rounded-3">
+                        <table class="table table-sm mb-0 ref-table" id="nccTable">
+                            <thead>
+                                <tr><th>NCC</th><th>CODE</th><th>DESC</th><th>HDNT</th><th>Terms</th></tr>
+                            </thead>
+                            <tbody id="nccBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-4 p-3 mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    <div class="section-title">Raw output</div>
+                    <div class="fw-semibold">API response / status</div>
+                </div>
+                <div class="small text-secondary">Useful when cần debug dữ liệu hoặc lỗi SQL</div>
+            </div>
+            <pre id="output" class="mb-0 rounded-3 p-3" style="min-height: 130px; background: #f8fbff; border: 1px solid rgba(32,64,109,.12);">Chưa gọi API.</pre>
+        </div>
+    </div>
+
+    <script>
+        const output = document.getElementById('output');
+        const connectionState = document.getElementById('connectionState');
+        const loadingMask = document.getElementById('loadingMask');
+        const poBody = document.getElementById('poBody');
+        const detailTitle = document.getElementById('detailTitle');
+        const detailMeta = document.getElementById('detailMeta');
+        const detailBody = document.getElementById('detailBody');
+        const searchInput = document.getElementById('searchInput');
+        const scopeSelect = document.getElementById('scopeSelect');
+        const fromCreatedDateInput = document.getElementById('fromCreatedDate');
+        const toCreatedDateInput = document.getElementById('toCreatedDate');
+        const btnSearch = document.getElementById('btnSearch');
+        const btnResetSearch = document.getElementById('btnResetSearch');
+        const btnAddCondition = document.getElementById('btnAddCondition');
+        const conditionList = document.getElementById('conditionList');
+        const advancedSearchToggle = document.getElementById('advancedSearchToggle');
+        const advancedSearchButton = document.getElementById('advancedSearchButton');
+        const advancedSearchBody = document.getElementById('advancedSearchBody');
+        const btnNewRow = document.getElementById('btnNewRow');
+        const btnSaveRow = document.getElementById('btnSaveRow');
+        const btnDeleteRow = document.getElementById('btnDeleteRow');
+        const btnCancelEdit = document.getElementById('btnCancelEdit');
+        const editorModeBadge = document.getElementById('editorModeBadge');
+        const editorMessage = document.getElementById('editorMessage');
+        const detailPODetailID = document.getElementById('detailPODetailID');
+        const detailPONumber = document.getElementById('detailPONumber');
+        const detailOrderDate = document.getElementById('detailOrderDate');
+        const detailCreatedDate = document.getElementById('detailCreatedDate');
+        const detailSupplierShortName = document.getElementById('detailSupplierShortName');
+        const detailRegionName = document.getElementById('detailRegionName');
+        const detailDivisionName = document.getElementById('detailDivisionName');
+        const detailProductCode = document.getElementById('detailProductCode');
+        const detailFactoryCode = document.getElementById('detailFactoryCode');
+        const detailQuantity = document.getElementById('detailQuantity');
+        const detailUnitPrice = document.getElementById('detailUnitPrice');
+        const detailVATRate = document.getElementById('detailVATRate');
+        const detailDeliveryMonth = document.getElementById('detailDeliveryMonth');
+        const detailExpectedDeliveryDate = document.getElementById('detailExpectedDeliveryDate');
+        const detailNote = document.getElementById('detailNote');
+        const supplierSuggestions = document.getElementById('supplierSuggestions');
+        const productSuggestions = document.getElementById('productSuggestions');
+        const factorySuggestions = document.getElementById('factorySuggestions');
+        const btnPing = document.getElementById('btnPing');
+        const btnLoad = document.getElementById('btnLoad');
+        const btnClear = document.getElementById('btnClear');
+        const metricDb = document.getElementById('metricDb');
+        const metricPo = document.getElementById('metricPo');
+        const metricLines = document.getElementById('metricLines');
+        const factoryBody = document.getElementById('factoryBody');
+        const itemBody = document.getElementById('itemBody');
+        const nccBody = document.getElementById('nccBody');
+        const sheetTabs = document.querySelectorAll('.sheet-tab');
+        const viewSections = {
+            workbook: document.getElementById('poTable').parentElement,
+            summary: document.getElementById('poTable').parentElement,
+            factory: document.getElementById('factoryTable').parentElement,
+            item: document.getElementById('itemTable').parentElement,
+            ncc: document.getElementById('nccTable').parentElement,
+        };
+
+        let workbook = [];
+        let filteredWorkbook = [];
+        let selectedRow = null;
+        let activeFilters = [];
+        let editorMode = 'view';
+
+        let factories = [];
+        let items = [];
+        let nccs = [];
+        let regions = [];
+        let divisions = [];
+        let advancedSearchCollapsed = true;
+        const conditionFieldOptions = [
+            ['all', 'All fields'],
+            ['poNumber', 'PO number'],
+            ['supplierShortName', 'Supplier'],
+            ['regionName', 'Region'],
+            ['divisionName', 'Division'],
+            ['itemCode', 'Item code'],
+            ['factoryCode', 'Factory code'],
+            ['factoryName', 'Factory name'],
+            ['vatRate', 'VAT'],
+            ['deliveryMonth', 'Delivery month'],
+        ];
+
+        const conditionOperatorOptions = [
+            ['contains', 'Contains'],
+            ['equals', 'Equals'],
+            ['startsWith', 'Starts with'],
+            ['endsWith', 'Ends with'],
+            ['notContains', 'Not contains']
+        ];
+
+        function todayIso() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function setDefaultDateRange() {
+            const today = todayIso();
+            if (!fromCreatedDateInput.value) fromCreatedDateInput.value = today;
+            if (!toCreatedDateInput.value) toCreatedDateInput.value = today;
+        }
+
+        function createConditionRow(condition = {}) {
+            const field = condition.field || 'all';
+            const operator = condition.operator || 'contains';
+            const value = condition.value || '';
+            const id = `cond-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+            return `
+                <div class="filter-row" data-condition-id="${id}">
+                    <select class="form-select condition-field">
+                        ${conditionFieldOptions.map(([optionValue, label]) => `<option value="${optionValue}" ${optionValue === field ? 'selected' : ''}>${label}</option>`).join('')}
+                    </select>
+                    <select class="form-select condition-operator">
+                        ${conditionOperatorOptions.map(([optionValue, label]) => `<option value="${optionValue}" ${optionValue === operator ? 'selected' : ''}>${label}</option>`).join('')}
+                    </select>
+                    <input type="text" class="form-control condition-value" placeholder="Enter keyword" value="${escapeHtml(value)}">
+                    <button type="button" class="btn btn-outline-danger btn-remove-condition">Remove</button>
+                </div>`;
+        }
+
+        function ensureAtLeastOneCondition() {
+            if (!conditionList.children.length) {
+                conditionList.innerHTML = createConditionRow();
+            }
+        }
+
+        function setAdvancedSearchCollapsed(collapsed) {
+            advancedSearchCollapsed = collapsed;
+            advancedSearchBody.classList.toggle('is-collapsed', collapsed);
+            advancedSearchButton.textContent = collapsed ? 'Show' : 'Hide';
+        }
+
+        function setEditorMode(mode) {
+            editorMode = mode;
+            editorModeBadge.textContent = mode.toUpperCase();
+            editorModeBadge.className = `badge rounded-pill ${mode === 'view' ? 'text-bg-secondary' : mode === 'new' ? 'text-bg-success' : 'text-bg-primary'}`;
+        }
+
+        function showEditorMessage(message, type = 'muted') {
+            editorMessage.textContent = message;
+            editorMessage.className = `small mb-2 ${type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-secondary'}`;
+        }
+
+        function hideSuggestions() {
+            supplierSuggestions.style.display = 'none';
+            productSuggestions.style.display = 'none';
+            factorySuggestions.style.display = 'none';
+        }
+
+        function normalize(text) {
+            return String(text ?? '').trim().toLowerCase();
+        }
+
+        function renderSuggestionBox(container, items, renderItem) {
+            if (!items.length) {
+                container.innerHTML = '<div class="suggestion-item text-secondary">No matches</div>';
+            } else {
+                container.innerHTML = items.map(renderItem).join('');
+            }
+            container.style.display = 'block';
+        }
+
+        function findSupplierMatches(query) {
+            const needle = normalize(query);
+            return nccs.filter(x => {
+                const shortName = readValue(x, 'supplierShortName', 'SupplierShortName');
+                const fullName = readValue(x, 'supplierFullName', 'SupplierFullName');
+                const contractNo = readValue(x, 'contractNo', 'ContractNo');
+                return [shortName, fullName, contractNo].some(value => normalize(value).includes(needle));
+            }).slice(0, 10);
+        }
+
+        function findProductMatches(query) {
+            const needle = normalize(query);
+            return items.filter(x => {
+                const code = readValue(x, 'productCode', 'ProductCode');
+                const name = readValue(x, 'productName', 'ProductName');
+                return [code, name].some(value => normalize(value).includes(needle));
+            }).slice(0, 10);
+        }
+
+        function findFactoryMatches(query) {
+            const needle = normalize(query);
+            return factories.filter(x => {
+                const code = readValue(x, 'factoryCode', 'FactoryCode');
+                const name = readValue(x, 'factoryName', 'FactoryName');
+                return [code, name].some(value => normalize(value).includes(needle));
+            }).slice(0, 10);
+        }
+
+        function validateMasterValue(value, source, ...keys) {
+            const needle = normalize(value);
+            return source.some(item => keys.some(key => normalize(readValue(item, key, key[0].toUpperCase() + key.slice(1))) === needle));
+        }
+
+        function fillEditor(row) {
+            detailPODetailID.value = row?.detailId ?? '';
+            detailPONumber.value = row?.poNumber || '';
+            detailOrderDate.value = row?.orderDate ? String(row.orderDate).slice(0, 10) : '';
+            detailCreatedDate.value = row?.createdDate ? formatDate(row.createdDate) : '';
+            detailSupplierShortName.value = row?.supplierShortName || '';
+            detailRegionName.value = row?.regionName || regions[0]?.regionName || 'SOUTH';
+            detailDivisionName.value = row?.divisionName || divisions[0]?.divisionName || 'Livestock';
+            detailProductCode.value = row?.itemCode || '';
+            detailFactoryCode.value = row?.factoryCode || '';
+            detailQuantity.value = row?.quantity ?? '';
+            detailUnitPrice.value = row?.unitPrice ?? '';
+            detailVATRate.value = row?.vatRate || '';
+            detailDeliveryMonth.value = row?.deliveryMonth || '';
+            detailExpectedDeliveryDate.value = row?.expectedDeliveryDate ? String(row.expectedDeliveryDate).slice(0, 10) : '';
+            detailNote.value = row?.note || '';
+        }
+
+        function currentEditorPayload() {
+            return {
+                PODetailID: detailPODetailID.value ? Number(detailPODetailID.value) : null,
+                PONumber: detailPONumber.value.trim(),
+                OrderDate: detailOrderDate.value,
+                SupplierShortName: detailSupplierShortName.value.trim(),
+                RegionName: detailRegionName.value,
+                DivisionName: detailDivisionName.value,
+                ProductCode: detailProductCode.value.trim(),
+                FactoryCode: detailFactoryCode.value.trim(),
+                Quantity: Number(detailQuantity.value || 0),
+                UnitPrice: Number(detailUnitPrice.value || 0),
+                VATRate: detailVATRate.value.trim(),
+                DeliveryMonth: detailDeliveryMonth.value.trim(),
+                ExpectedDeliveryDate: detailExpectedDeliveryDate.value || null,
+                Note: detailNote.value.trim()
+            };
+        }
+
+        function masterExists(payload) {
+            const errors = [];
+            if (!validateMasterValue(payload.SupplierShortName, nccs, 'supplierShortName')) {
+                errors.push('NCC không tồn tại trong tblNCC.');
+            }
+            if (!validateMasterValue(payload.ProductCode, items, 'productCode')) {
+                errors.push('ITEM không tồn tại trong tblITEM.');
+            }
+            if (!validateMasterValue(payload.FactoryCode, factories, 'factoryCode')) {
+                errors.push('FACT không tồn tại trong tblFactory.');
+            }
+            return errors;
+        }
+
+        function bindAutocomplete(input, container, matchesFn, pickFn, renderFn) {
+            input.addEventListener('input', () => {
+                const query = input.value.trim();
+                if (!query) {
+                    container.style.display = 'none';
+                    return;
+                }
+                const matches = matchesFn(query);
+                renderSuggestionBox(container, matches, renderFn);
+            });
+
+            input.addEventListener('focus', () => {
+                const query = input.value.trim();
+                if (!query) return;
+                const matches = matchesFn(query);
+                renderSuggestionBox(container, matches, renderFn);
+            });
+
+            container.addEventListener('click', event => {
+                const item = event.target.closest('[data-suggest-value]');
+                if (!item) return;
+                pickFn(item.getAttribute('data-suggest-value') || '');
+                container.style.display = 'none';
+            });
+        }
+
+        function readConditions() {
+            return [...conditionList.querySelectorAll('.filter-row')].map(row => ({
+                field: row.querySelector('.condition-field')?.value || 'all',
+                operator: row.querySelector('.condition-operator')?.value || 'contains',
+                value: row.querySelector('.condition-value')?.value.trim() || ''
+            })).filter(condition => condition.value.length > 0);
+        }
+
+        function valueForField(row, field) {
+            switch (field) {
+                case 'poNumber': return row.poNumber;
+                case 'supplierShortName': return row.supplierShortName;
+                case 'regionName': return row.regionName;
+                case 'divisionName': return row.divisionName;
+                case 'itemCode': return row.itemCode;
+                case 'itemName': return row.itemName;
+                case 'factoryCode': return row.factoryCode;
+                case 'factoryName': return row.factoryName;
+                case 'vatRate': return row.vatRate;
+                case 'deliveryMonth': return row.deliveryMonth;
+                case 'note': return row.note;
+                case 'all':
+                default:
+                    return toSearchText(row);
+            }
+        }
+
+        function matchesCondition(row, condition) {
+            const source = String(valueForField(row, condition.field) ?? '').toLowerCase();
+            const target = String(condition.value ?? '').toLowerCase();
+            if (!target) return true;
+
+            switch (condition.operator) {
+                case 'equals':
+                    return source === target;
+                case 'startsWith':
+                    return source.startsWith(target);
+                case 'endsWith':
+                    return source.endsWith(target);
+                case 'notContains':
+                    return !source.includes(target);
+                case 'contains':
+                default:
+                    return source.includes(target);
+            }
+        }
+
+        function applyCurrentFilters() {
+            const quickSearch = searchInput.value.trim().toLowerCase();
+            const scope = scopeSelect.value;
+            activeFilters = readConditions();
+
+            filteredWorkbook = workbook.filter(row => {
+                const quickMatch = !quickSearch
+                    || (scope === 'all' && toSearchText(row).includes(quickSearch))
+                    || (scope === 'poNumber' && String(row.poNumber || '').toLowerCase().includes(quickSearch))
+                    || (scope === 'item' && String(row.itemCode || row.itemName || '').toLowerCase().includes(quickSearch))
+                    || (scope === 'supplier' && String(row.supplierShortName || '').toLowerCase().includes(quickSearch))
+                    || (scope === 'note' && String(row.note || '').toLowerCase().includes(quickSearch));
+
+                if (!quickMatch) return false;
+                return activeFilters.every(condition => matchesCondition(row, condition));
+            });
+
+            if (!filteredWorkbook.length) {
+                selectedRow = null;
+            } else if (!selectedRow || !filteredWorkbook.some(row => row.rowKey === selectedRow.rowKey)) {
+                selectedRow = filteredWorkbook[0];
+            }
+
+            renderRows(filteredWorkbook);
+            renderDetail(selectedRow);
+        }
+
+        function setLoading(isLoading) {
+            loadingMask.style.display = isLoading ? 'flex' : 'none';
+        }
+
+        function formatDate(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return String(value);
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        function formatNumber(value) {
+            const number = Number(value || 0);
+            return new Intl.NumberFormat('vi-VN').format(number);
+        }
+
+        function readValue(source, ...keys) {
+            for (const key of keys) {
+                if (source && source[key] !== undefined && source[key] !== null) {
+                    return source[key];
+                }
+            }
+            return '';
+        }
+
+        function toSearchText(row) {
+            return [
+                row.poNumber,
+                row.orderDate,
+                row.createdDate,
+                row.supplierShortName,
+                row.regionName,
+                row.divisionName,
+                row.itemCode,
+                row.itemName,
+                row.factoryCode,
+                row.factoryName,
+                row.vatRate,
+                row.deliveryMonth,
+                row.details?.map(d => [
+                    readValue(d, 'productCode', 'ProductCode'),
+                    readValue(d, 'factoryCode', 'FactoryCode'),
+                    readValue(d, 'note', 'Note')
+                ].join(' ')).join(' ')
+            ].filter(Boolean).join(' ').toLowerCase();
+        }
+
+        function flattenWorkbook(data) {
+            const rows = [];
+            data.forEach((group, groupIndex) => {
+                const details = group.details && group.details.length ? group.details : [{}];
+                details.forEach((detail, detailIndex) => {
+                    const detailId = readValue(detail, 'podetailid', 'PODetailID');
+                    const productCode = readValue(detail, 'productCode', 'ProductCode');
+                    const factoryCode = readValue(detail, 'factoryCode', 'FactoryCode');
+                    const factoryName = readValue(detail, 'factoryName', 'FactoryName');
+                    const quantity = readValue(detail, 'quantity', 'Quantity');
+                    const unitPrice = readValue(detail, 'unitPrice', 'UnitPrice');
+                    const vatRate = readValue(detail, 'vatRate', 'VATRate');
+                    const deliveryMonth = readValue(detail, 'deliveryMonth', 'DeliveryMonth');
+                    const note = readValue(detail, 'note', 'Note');
+                    const productName = readValue(detail, 'productName', 'ProductName');
+
+                    rows.push({
+                        groupIndex,
+                        detailIndex,
+                        poNumber: group.poNumber,
+                        orderDate: group.orderDate,
+                        createdDate: group.createdDate,
+                        supplierShortName: group.supplierShortName,
+                        regionName: group.regionName,
+                        divisionName: group.divisionName,
+                        detailId,
+                        itemCode: productCode,
+                        itemName: productName || productCode,
+                        factoryCode,
+                        factoryName: factoryName || factoryCode,
+                        quantity,
+                        unitPrice,
+                        vatRate,
+                        deliveryMonth,
+                        note,
+                        rowKey: detailId ? `detail-${detailId}` : `${group.poNumber}-${detailIndex}`
+                    });
+                });
+            });
+            return rows;
+        }
+
+        function renderRows(data) {
+            if (!data.length) {
+                poBody.innerHTML = `
+                    <tr>
+                        <td colspan="14" class="text-center text-secondary py-5">Không có dòng nào khớp bộ lọc hiện tại.</td>
+                    </tr>`;
+                metricLines.textContent = '0';
+                metricPo.textContent = '0';
+                return;
+            }
+
+            const uniquePo = new Set(data.map(x => x.poNumber));
+            metricLines.textContent = data.length.toLocaleString('vi-VN');
+            metricPo.textContent = uniquePo.size.toLocaleString('vi-VN');
+
+            poBody.innerHTML = data.map((row, index) => {
+                const isSelected = selectedRow && selectedRow.rowKey === row.rowKey;
+                const rowClass = isSelected ? 'po-group' : '';
+                const rowIndex = index + 1;
+                return `
+                    <tr class="${rowClass}" data-row-key="${row.rowKey}">
+                        <td class="sticky-index">${rowIndex}</td>
+                        <td class="sticky-po">
+                            <div class="fw-bold">${row.poNumber}</div>
+                            <div class="cell-muted">${formatDate(row.orderDate)}</div>
+                            <div class="cell-muted">Created: ${formatDate(row.createdDate)}</div>
+                        </td>
+                        <td class="sticky-item">${row.itemCode || '<span class="cell-muted">-</span>'}</td>
+                        <td>
+                            <div class="fw-semibold">${row.itemName || '<span class="cell-muted">-</span>'}</div>
+                            <div class="cell-muted">${row.itemCode || ''}</div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">${row.factoryName || '<span class="cell-muted">-</span>'}</div>
+                            <div class="cell-muted">${row.factoryCode || ''}</div>
+                        </td>
+                        <td>${row.regionName || '<span class="cell-muted">-</span>'}</td>
+                        <td>${row.divisionName || '<span class="cell-muted">-</span>'}</td>
+                        <td class="text-end">${row.quantity === '' ? '<span class="cell-muted">-</span>' : formatNumber(row.quantity)}</td>
+                        <td class="text-end">${row.unitPrice === '' ? '<span class="cell-muted">-</span>' : formatNumber(row.unitPrice)}</td>
+                        <td>${row.vatRate || '<span class="cell-muted">-</span>'}</td>
+                        <td>${row.deliveryMonth || '<span class="cell-muted">-</span>'}</td>
+                        <td>${formatDate(row.orderDate)}</td>
+                        <td>${row.supplierShortName || '<span class="cell-muted">-</span>'}</td>
+                        <td>${row.note || '<span class="cell-muted">-</span>'}</td>
+                    </tr>`;
+            }).join('');
+
+            document.querySelectorAll('#poBody tr[data-row-key]').forEach(tr => {
+                tr.addEventListener('click', () => {
+                    const rowKey = tr.getAttribute('data-row-key');
+                    selectedRow = filteredWorkbook.find(r => r.rowKey === rowKey) || null;
+                    renderRows(filteredWorkbook);
+                    renderDetail(selectedRow);
+                });
+            });
+        }
+
+        function renderDetail(row) {
+            if (!row) {
+                detailTitle.textContent = 'Chưa có dòng nào';
+                detailMeta.textContent = 'Chọn một dòng trong bảng để xem chi tiết.';
+                detailBody.innerHTML = 'Khi dữ liệu được tải, bấm vào một dòng PO để xem detail, giống thao tác mở record trong Excel.';
+                fillEditor(null);
+                setEditorMode('view');
+                return;
+            }
+
+            detailTitle.textContent = row.poNumber;
+            detailMeta.textContent = `${row.supplierShortName || '-'} • ${row.regionName || '-'} • ${row.divisionName || '-'} • Created ${formatDate(row.createdDate)}`;
+            fillEditor(row);
+            setEditorMode(row.detailId ? 'edit' : 'new');
+            detailBody.innerHTML = `
+                <div class="row g-2">
+                    <div class="col-6"><strong>Item</strong><br>${row.itemCode || '-'}</div>
+                    <div class="col-6"><strong>Item name</strong><br>${row.itemName || '-'}</div>
+                    <div class="col-6"><strong>Factory</strong><br>${row.factoryName || row.factoryCode || '-'}</div>
+                    <div class="col-6"><strong>Qty</strong><br>${row.quantity === '' ? '-' : formatNumber(row.quantity)}</div>
+                    <div class="col-6"><strong>Price</strong><br>${row.unitPrice === '' ? '-' : formatNumber(row.unitPrice)}</div>
+                    <div class="col-6"><strong>Created</strong><br>${formatDate(row.createdDate) || '-'}</div>
+                    <div class="col-12"><strong>Note</strong><br>${row.note || '-'}</div>
+                </div>`;
+        }
+
+        function fillReferenceTables() {
+            factoryBody.innerHTML = factories.map(f => `
+                <tr>
+                    <td class="fw-semibold">${readValue(f, 'factoryCode', 'FactoryCode') || '-'}</td>
+                    <td>${readValue(f, 'factoryName', 'FactoryName') || '-'}</td>
+                    <td>${readValue(f, 'regionName', 'RegionName') || '-'}</td>
+                    <td>${readValue(f, 'divisionName', 'DivisionName') || '-'}</td>
+                    <td>${readValue(f, 'factoryCode', 'FactoryCode') || '-'}</td>
+                </tr>`).join('');
+
+            itemBody.innerHTML = items.map(i => `
+                <tr>
+                    <td class="fw-semibold">${readValue(i, 'productCode', 'ProductCode') || '-'}</td>
+                    <td>${readValue(i, 'productName', 'ProductName') || '-'}</td>
+                    <td>${readValue(i, 'pic', 'PIC') || '-'}</td>
+                    <td>${readValue(i, 'taxType', 'TaxType') || '-'}</td>
+                    <td>${readValue(i, 'countryOfOrigin', 'CountryOfOrigin') || '-'}</td>
+                </tr>`).join('');
+
+            nccBody.innerHTML = nccs.map(n => `
+                <tr>
+                    <td class="fw-semibold">${readValue(n, 'supplierShortName', 'SupplierShortName') || '-'}</td>
+                    <td>${readValue(n, 'supplierFullName', 'SupplierFullName') || '-'}</td>
+                    <td>${readValue(n, 'contractNo', 'ContractNo') || '-'}</td>
+                    <td>${readValue(n, 'incoterm', 'Incoterm') || '-'}</td>
+                    <td>${readValue(n, 'paymentTerms', 'PaymentTerms') || '-'}</td>
+                </tr>`).join('');
+        }
+
+        async function loadReferenceData() {
+            try {
+                const [factoryRes, itemRes, supplierRes] = await Promise.all([
+                    fetch('/api/referencedata/factories', { cache: 'no-store' }),
+                    fetch('/api/referencedata/products', { cache: 'no-store' }),
+                    fetch('/api/referencedata/suppliers', { cache: 'no-store' })
+                ]);
+
+                const [regionRes, divisionRes] = await Promise.all([
+                    fetch('/api/referencedata/regions', { cache: 'no-store' }),
+                    fetch('/api/referencedata/divisions', { cache: 'no-store' })
+                ]);
+
+                factories = factoryRes.ok ? await factoryRes.json() : [];
+                items = itemRes.ok ? await itemRes.json() : [];
+                nccs = supplierRes.ok ? await supplierRes.json() : [];
+                regions = regionRes.ok ? await regionRes.json() : [];
+                divisions = divisionRes.ok ? await divisionRes.json() : [];
+
+                detailRegionName.innerHTML = regions.map(r => `<option value="${readValue(r, 'regionName', 'RegionName')}">${readValue(r, 'regionName', 'RegionName')}</option>`).join('');
+                detailDivisionName.innerHTML = divisions.map(d => `<option value="${readValue(d, 'divisionName', 'DivisionName')}">${readValue(d, 'divisionName', 'DivisionName')}</option>`).join('');
+
+                fillReferenceTables();
+                bindAutocomplete(
+                    detailSupplierShortName,
+                    supplierSuggestions,
+                    findSupplierMatches,
+                    value => { detailSupplierShortName.value = value; supplierSuggestions.style.display = 'none'; },
+                    item => `<div class="suggestion-item" data-suggest-value="${escapeHtml(readValue(item, 'supplierShortName', 'SupplierShortName'))}"><strong>${escapeHtml(readValue(item, 'supplierShortName', 'SupplierShortName'))}</strong><span class="text-secondary">${escapeHtml(readValue(item, 'supplierFullName', 'SupplierFullName'))}</span></div>`
+                );
+                bindAutocomplete(
+                    detailProductCode,
+                    productSuggestions,
+                    findProductMatches,
+                    value => { detailProductCode.value = value; productSuggestions.style.display = 'none'; },
+                    item => `<div class="suggestion-item" data-suggest-value="${escapeHtml(readValue(item, 'productCode', 'ProductCode'))}"><strong>${escapeHtml(readValue(item, 'productName', 'ProductName'))}</strong><span class="text-secondary">${escapeHtml(readValue(item, 'productCode', 'ProductCode'))}</span></div>`
+                );
+                bindAutocomplete(
+                    detailFactoryCode,
+                    factorySuggestions,
+                    findFactoryMatches,
+                    value => { detailFactoryCode.value = value; factorySuggestions.style.display = 'none'; },
+                    item => `<div class="suggestion-item" data-suggest-value="${escapeHtml(readValue(item, 'factoryCode', 'FactoryCode'))}"><strong>${escapeHtml(readValue(item, 'factoryCode', 'FactoryCode'))}</strong><span class="text-secondary">${escapeHtml(readValue(item, 'factoryName', 'FactoryName'))}</span></div>`
+                );
+            } catch (error) {
+                output.textContent = 'Không load được danh mục tham chiếu:\n' + error;
+            }
+        }
+
+        async function callEndpoint(url, label) {
+            setLoading(true);
+            output.textContent = `Đang gọi ${label}...`;
+            try {
+                const response = await fetch(url, { cache: 'no-store' });
+                const text = await response.text();
+                if (!response.ok) {
+                    connectionState.innerHTML = `<span class="status-dot dot-danger"></span>HTTP ${response.status} ${response.statusText}`;
+                    metricDb.textContent = 'FAIL';
+                    output.textContent = `HTTP ${response.status} ${response.statusText}\n\n${text}`;
+                    return null;
+                }
+
+                try {
+                    const data = JSON.parse(text);
+                    output.textContent = JSON.stringify(data, null, 2);
+                    return data;
+                } catch {
+                    output.textContent = text;
+                    return text;
+                }
+            } catch (error) {
+                connectionState.innerHTML = `<span class="status-dot dot-danger"></span>Không gọi được API`;
+                metricDb.textContent = 'FAIL';
+                output.textContent = 'Không gọi được API:\n' + error;
+                return null;
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function loadPing() {
+            const data = await callEndpoint('/api/purchaseorders/ping', '/api/purchaseorders/ping');
+            if (data) {
+                connectionState.innerHTML = `<span class="status-dot dot-ok"></span>${data.serverName} / ${data.databaseName}`;
+                metricDb.textContent = 'OK';
+            }
+        }
+
+        async function loadWorkbook() {
+            setLoading(true);
+            output.textContent = 'Đang lấy dữ liệu purchase orders...';
+            try {
+                setDefaultDateRange();
+                const params = new URLSearchParams({
+                    fromCreatedDate: fromCreatedDateInput.value || todayIso(),
+                    toCreatedDate: toCreatedDateInput.value || todayIso()
+                });
+                const response = await fetch(`/api/purchaseorders?${params.toString()}`, { cache: 'no-store' });
+                const text = await response.text();
+                if (!response.ok) {
+                    connectionState.innerHTML = `<span class="status-dot dot-danger"></span>Load PO failed`;
+                    metricDb.textContent = 'FAIL';
+                    output.textContent = `HTTP ${response.status} ${response.statusText}\n\n${text}`;
+                    return;
+                }
+
+                const payload = JSON.parse(text);
+                output.textContent = JSON.stringify(payload, null, 2);
+                const groups = Array.isArray(payload?.data) ? payload.data : [];
+                workbook = flattenWorkbook(groups);
+                selectedRow = workbook[0] || null;
+                applyCurrentFilters();
+                metricPo.textContent = groups.length.toLocaleString('vi-VN');
+                metricLines.textContent = workbook.length.toLocaleString('vi-VN');
+            } catch (error) {
+                output.textContent = 'Không load được dữ liệu:\n' + error;
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function saveEditorRow() {
+            const payload = currentEditorPayload();
+            const validationErrors = [];
+
+            if (!payload.PONumber) validationErrors.push('PO Number is required.');
+            if (!payload.OrderDate) validationErrors.push('Order date is required.');
+            if (!payload.SupplierShortName) validationErrors.push('NCC is required.');
+            if (!payload.ProductCode) validationErrors.push('ITEM is required.');
+            if (!payload.FactoryCode) validationErrors.push('FACT is required.');
+            if (payload.Quantity <= 0) validationErrors.push('Quantity must be greater than 0.');
+            if (payload.UnitPrice < 0) validationErrors.push('Unit price must be >= 0.');
+            validationErrors.push(...masterExists(payload));
+
+            if (validationErrors.length) {
+                showEditorMessage(validationErrors[0], 'error');
+                output.textContent = validationErrors.join('\n');
+                return;
+            }
+
+            const isNew = !payload.PODetailID;
+            const endpoint = isNew ? '/api/purchaseorders/row' : `/api/purchaseorders/row/${payload.PODetailID}`;
+            const method = isNew ? 'POST' : 'PUT';
+
+            try {
+                setLoading(true);
+                const response = await fetch(endpoint, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const text = await response.text();
+                if (!response.ok) {
+                    showEditorMessage(text || 'Save failed.', 'error');
+                    output.textContent = text;
+                    return;
+                }
+
+                showEditorMessage(isNew ? 'Created successfully.' : 'Updated successfully.', 'success');
+                output.textContent = text;
+                await loadWorkbook();
+            } catch (error) {
+                showEditorMessage('Không lưu được dữ liệu.', 'error');
+                output.textContent = String(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function deleteEditorRow() {
+            const detailId = detailPODetailID.value;
+            if (!detailId) {
+                showEditorMessage('Chọn một dòng hiện có rồi mới xoá được.', 'error');
+                return;
+            }
+
+            if (!confirm('Xoá dòng này? Nếu đây là dòng cuối cùng của PO thì header cũng sẽ bị xoá.')) return;
+
+            try {
+                setLoading(true);
+                const response = await fetch(`/api/purchaseorders/row/${detailId}`, { method: 'DELETE' });
+                const text = await response.text();
+                if (!response.ok) {
+                    showEditorMessage(text || 'Delete failed.', 'error');
+                    output.textContent = text;
+                    return;
+                }
+
+                showEditorMessage('Deleted successfully.', 'success');
+                output.textContent = text;
+                selectedRow = null;
+                await loadWorkbook();
+            } catch (error) {
+                showEditorMessage('Không xoá được dữ liệu.', 'error');
+                output.textContent = String(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        btnPing.addEventListener('click', loadPing);
+        btnLoad.addEventListener('click', loadWorkbook);
+        btnSearch.addEventListener('click', loadWorkbook);
+        btnNewRow.addEventListener('click', () => {
+            selectedRow = null;
+            fillEditor(null);
+            setEditorMode('new');
+            showEditorMessage('Nhập dữ liệu mới rồi bấm Save.', 'muted');
+            hideSuggestions();
+        });
+        btnSaveRow.addEventListener('click', saveEditorRow);
+        btnDeleteRow.addEventListener('click', deleteEditorRow);
+        btnCancelEdit.addEventListener('click', () => {
+            if (selectedRow) {
+                fillEditor(selectedRow);
+                setEditorMode('edit');
+                showEditorMessage('Đã huỷ thay đổi và nạp lại row đang chọn.', 'muted');
+            } else {
+                fillEditor(null);
+                setEditorMode('view');
+                showEditorMessage('Đã huỷ thao tác.', 'muted');
+            }
+            hideSuggestions();
+        });
+        btnAddCondition.addEventListener('click', () => {
+            conditionList.insertAdjacentHTML('beforeend', createConditionRow());
+            ensureAtLeastOneCondition();
+        });
+        advancedSearchToggle.addEventListener('click', event => {
+            if (event.target.closest('button')) return;
+            setAdvancedSearchCollapsed(!advancedSearchCollapsed);
+        });
+        advancedSearchButton.addEventListener('click', () => setAdvancedSearchCollapsed(!advancedSearchCollapsed));
+        btnResetSearch.addEventListener('click', () => {
+            setDefaultDateRange();
+            conditionList.innerHTML = createConditionRow();
+            searchInput.value = '';
+            scopeSelect.value = 'all';
+            selectedRow = null;
+            if (workbook.length) {
+                applyCurrentFilters();
+            } else {
+                renderRows([]);
+                renderDetail(null);
+            }
+            output.textContent = 'Đã reset bộ lọc ngày và điều kiện.';
+        });
+        btnClear.addEventListener('click', () => {
+            searchInput.value = '';
+            scopeSelect.value = 'all';
+            conditionList.innerHTML = createConditionRow();
+            setDefaultDateRange();
+            selectedRow = null;
+            if (workbook.length) {
+                applyCurrentFilters();
+            } else {
+                renderRows([]);
+                renderDetail(null);
+            }
+            renderDetail(null);
+            output.textContent = 'Đã clear bộ lọc.';
+        });
+
+        searchInput.addEventListener('input', () => applyCurrentFilters());
+        scopeSelect.addEventListener('change', () => applyCurrentFilters());
+        conditionList.addEventListener('input', () => applyCurrentFilters());
+        conditionList.addEventListener('change', () => applyCurrentFilters());
+        conditionList.addEventListener('click', event => {
+            if (!event.target.classList.contains('btn-remove-condition')) return;
+            event.target.closest('.filter-row')?.remove();
+            ensureAtLeastOneCondition();
+            applyCurrentFilters();
+        });
+
+        setDefaultDateRange();
+        conditionList.innerHTML = createConditionRow();
+        ensureAtLeastOneCondition();
+        setAdvancedSearchCollapsed(true);
+
+        sheetTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                sheetTabs.forEach(x => x.classList.remove('active'));
+                tab.classList.add('active');
+                const view = tab.getAttribute('data-view');
+                if (view === 'workbook' || view === 'summary') {
+                    document.querySelector('#poTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    return;
+                }
+                viewSections[view]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        document.getElementById('btnFactory').addEventListener('click', () => viewSections.factory.scrollIntoView({ behavior: 'smooth' }));
+        document.getElementById('btnItem').addEventListener('click', () => viewSections.item.scrollIntoView({ behavior: 'smooth' }));
+        document.getElementById('btnNcc').addEventListener('click', () => viewSections.ncc.scrollIntoView({ behavior: 'smooth' }));
+
+        fillReferenceTables();
+        loadReferenceData();
+    </script>
+</body>
+</html>

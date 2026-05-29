@@ -1290,12 +1290,11 @@
       "Dapper >= 2.1.79",
       "Microsoft.AspNetCore.OpenApi >= 10.0.1",
       "Microsoft.Data.SqlClient >= 7.0.1",
-      "swashbuckle.aspnetcore >= 10.1.7"
+      "Swashbuckle.AspNetCore >= 10.1.7"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Admin\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\Admin\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
@@ -1306,10 +1305,8 @@
       "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
       "outputPath": "D:\\LEARN_OLDLAP\\PremixOrder\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
+        "D:\\LEARN_OLDLAP\\PremixOrder\\NuGet.Config",
         "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
@@ -1318,7 +1315,6 @@
         "net10.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -1355,7 +1351,7 @@
             "target": "Package",
             "version": "[7.0.1, )"
           },
-          "swashbuckle.aspnetcore": {
+          "Swashbuckle.AspNetCore": {
             "target": "Package",
             "version": "[10.1.7, )"
           }
