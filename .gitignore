@@ -7,3 +7,6 @@ secrets.json
 Properties/launchSettings.local.json
 *.sql
 !*.sql.example
+bin/
+obj/
+out/
