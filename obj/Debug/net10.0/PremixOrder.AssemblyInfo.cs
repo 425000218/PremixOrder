@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PremixOrder")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+db8bd2580d487dabcb383f37c689bbae1ad38b6b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+74f1faa3981374d9007350d4bf172a040af7ffd7")]
 [assembly: System.Reflection.AssemblyProductAttribute("PremixOrder")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PremixOrder")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
